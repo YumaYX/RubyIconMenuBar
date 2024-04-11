@@ -20,16 +20,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the application
-        let myWidth: CGFloat = 17
+        let myWidth: CGFloat = 14
         statusBar = NSStatusBar.init()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem!.menu = myMenu
         
         statusItem?.button?.title = ""
         
-        let imageView = NSImageView(frame: NSRect(x: 0, y: 8, width: myWidth, height: myWidth))
+        let imageView = NSImageView(frame: NSRect(x: 0, y: 5, width: myWidth, height: myWidth))
+        imageView.imageScaling = .scaleAxesIndependently
+
         let image = NSImage.init(imageLiteralResourceName: "ruby-logo.png")
-        imageView.image = image
+
+        if let image = NSImage(named: "ruby-logo.png") {
+            imageView.image = image
+            imageView.image?.size = imageView.frame.size
+        }
         
         let rubyMenuItem = NSMenuItem(
             title: "Go to ruby-lang.org..",
@@ -45,6 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         rbenvPath = homeDir.appendingPathComponent(file)
         
         statusItem?.button?.imagePosition = NSControl.ImagePosition.imageLeft
+
         statusItem?.button?.image = image
         
         handleChanges()
