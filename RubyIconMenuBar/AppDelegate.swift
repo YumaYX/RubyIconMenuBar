@@ -14,12 +14,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     let myMenu = NSMenu()
     
+    private var color: Bool?
+    
     var rbenvPath: URL? = nil
+    
+    var imageView = NSImageView()
     
     var folderMonitor: FolderMonitor!
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the application
+        color = false
         let myWidth: CGFloat = 14
         statusBar = NSStatusBar.init()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -27,15 +32,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         statusItem?.button?.title = ""
         
-        let imageView = NSImageView(frame: NSRect(x: 0, y: 5, width: myWidth, height: myWidth))
+        imageView = NSImageView(frame: NSRect(x: 0, y: 5, width: myWidth, height: myWidth))
         imageView.imageScaling = .scaleAxesIndependently
 
         let image = NSImage.init(imageLiteralResourceName: "ruby-logo.png")
-
         if let image = NSImage(named: "ruby-logo.png") {
             imageView.image = image
             imageView.image?.size = imageView.frame.size
         }
+        changeIconColor()
         
         let rubyMenuItem = NSMenuItem(
             title: "Go to ruby-lang.org..",
@@ -44,6 +49,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         rubyMenuItem.target = self
         myMenu.addItem(rubyMenuItem)
+        
+        let rubyMenuItemColor = NSMenuItem(
+            title: "Change Icon Color",
+            action: #selector(changeIconColor),
+            keyEquivalent: ""
+        )
+    
+        rubyMenuItemColor.target = self
+        myMenu.addItem(rubyMenuItemColor)
+        
         myMenu.addItem(NSMenuItem(title: "Quit", action: #selector(AppDelegate.quit(_:)), keyEquivalent: ""))
         
         let file = ".rbenv/version"
@@ -83,6 +98,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @objc func changeIconColor() {
+
+        imageView.image = nil
+        if let image = NSImage(named: "ruby-logo.png") {
+            imageView.image = image
+            imageView.image?.size = imageView.frame.size
+            if color! {
+                statusItem?.button?.image = image.mono
+                color = false
+            }else {
+                statusItem?.button?.image = image
+                color = true
+            }
+        }
+
+    }
+    
     private func handleChanges() {
         // Update the status item's title with the current Ruby version
         DispatchQueue.main.async {
@@ -99,5 +131,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             print(error)
         }
         return ""
+    }
+}
+
+extension NSImage {
+    public var ciImage: CIImage? {
+        guard let imageData = self.tiffRepresentation else { return nil }
+        return CIImage(data: imageData)
+    }
+    
+    public var mono: NSImage {
+        guard let monoFilter = CIFilter(name: "CIPhotoEffectMono") else { return self }
+        monoFilter.setValue(self.ciImage, forKey: kCIInputImageKey)
+        guard let output = monoFilter.outputImage else { return self }
+        let rep = NSCIImageRep(ciImage: output)
+        let nsImage = NSImage(size: CGSize(width: 14,height: 14))
+        nsImage.addRepresentation(rep)
+        return nsImage
     }
 }
